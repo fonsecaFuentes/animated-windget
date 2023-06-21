@@ -29,15 +29,13 @@ def create_table():
     connection.commit()
 
 
-def load_data(var_title, var_category, var_developer, var_price):
-    description_text = textbox.get("1.0", "end-1c")
-    var_description.set(description_text)
+def load_data(var_title, var_category, var_developer, var_price, textbox):
     load = (
         var_title.get(),
         var_category.get(),
         var_developer.get(),
         var_price.get(),
-        var_description,
+        textbox,
     )
     connection = create_db()
     cursor = connection.cursor()
@@ -181,10 +179,9 @@ entry_price = ctk.CTkEntry(animated_panel, textvariable=var_price).pack(
 label_description = ctk.CTkLabel(animated_panel, text="Description").pack(
     expand=True, fill="both", padx=2, pady=10
 )
-entry_description = textbox = ctk.CTkTextbox(animated_panel).pack(
-    expand=True, fill="both", padx=35, pady=10
-)
-entry_description.insert("1.0", var_description.get())
+textbox = ctk.CTkTextbox(animated_panel)
+textbox.pack(expand=True, fill="both", padx=35, pady=10)
+
 
 # buttons
 load = ctk.CTkButton(
@@ -194,7 +191,9 @@ load = ctk.CTkButton(
     corner_radius=5,
     width=180,
     height=40,
-    command=load_data(var_title, var_category, var_developer, var_price),
+    command=lambda: load_data(
+        var_title, var_category, var_developer, var_price, textbox
+    ),
 ).pack(expand=True, fill="y", pady=10)
 modify = ctk.CTkButton(
     animated_panel,
