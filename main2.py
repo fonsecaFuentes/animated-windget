@@ -29,18 +29,17 @@ def create_table():
     connection.commit()
 
 
-def load_data(var_title, var_category, var_developer, var_price, textbox):
+def load_data(entry_title, var_category, var_developer, var_price):
+    print(entry_title.get())
     load = (
         var_title.get(),
         var_category.get(),
         var_developer.get(),
         var_price.get(),
-        textbox,
     )
     connection = create_db()
     cursor = connection.cursor()
-    sql = "INSERT INTO data_game (title, category, developer, price,\
-        description) VALUES (?, ?, ?, ?, ?)"
+    sql = "INSERT INTO data_game (title, category, developer, price) VALUES (?, ?, ?, ?)"
     cursor.execute(sql, load)
     connection.commit()
 
@@ -122,7 +121,7 @@ def move_btn():
 # window
 window = ctk.CTk()
 window.title("Animated Widgets")
-window.geometry("800x1200")
+window.geometry("600x600")
 ctk.set_appearance_mode(appearance_mode)
 
 # variables
@@ -142,83 +141,68 @@ animated_panel = SlidePanel(window, 0.96, 0.65)
 toogle_sidebar = ctk.CTkButton(
     animated_panel,
     text="toogle sidebar",
-    font=("Arial", 20),
+    font=("Arial", 14),
     corner_radius=0,
     command=animated_panel.animate,
 ).pack(expand=True, fill="both", pady=10)
 
 # label and imputs
-label_title = ctk.CTkLabel(animated_panel, text="Title").pack(
-    expand=True, fill="both", padx=2, pady=10
-)
-entry_title = ctk.CTkEntry(animated_panel, textvariable=var_title).pack(
-    expand=True, fill="both", padx=35, pady=10
-)
 
-label_category = ctk.CTkLabel(animated_panel, text="Category").pack(
-    expand=True, fill="both", padx=2, pady=10
-)
-entry_category = ctk.CTkEntry(animated_panel, textvariable=var_category).pack(
-    expand=True, fill="both", padx=35, pady=10
-)
-label_developer = ctk.CTkLabel(animated_panel, text="Developer").pack(
-    expand=True, fill="both", padx=2, pady=10
-)
-entry_developer = ctk.CTkEntry(animated_panel, textvariable=var_developer).pack(
-    expand=True, fill="both", padx=35, pady=10
-)
+entry_title = ctk.CTkEntry(animated_panel, placeholder_text="Title", width=130, height=5).pack(
+    expand=True, fill="y", padx=10, pady=10)
 
-label_price = ctk.CTkLabel(animated_panel, text="Price").pack(
-    expand=True, fill="both", padx=2, pady=10
-)
-entry_price = ctk.CTkEntry(animated_panel, textvariable=var_price).pack(
-    expand=True, fill="both", padx=35, pady=10
-)
+entry_category = ctk.CTkEntry(animated_panel, placeholder_text="Category", width=130, height=5).pack(
+    expand=True, fill="y", padx=10, pady=10)
+
+entry_developer = ctk.CTkEntry(animated_panel, placeholder_text="Developer", width=130, height=5).pack(
+    expand=True, fill="y", padx=10, pady=10)
+
+entry_price = ctk.CTkEntry(animated_panel, placeholder_text="Price", width=130, height=5).pack(
+    expand=True, fill="y", padx=10, pady=10)
 
 # textbox
-label_description = ctk.CTkLabel(animated_panel, text="Description").pack(
-    expand=True, fill="both", padx=2, pady=10
-)
-textbox = ctk.CTkTextbox(animated_panel)
-textbox.pack(expand=True, fill="both", padx=35, pady=10)
+label_description = ctk.CTkLabel(animated_panel, text="Description", width=130, height=3).pack(
+    padx=1, pady=1)
+textbox = ctk.CTkTextbox(animated_panel, width=130, height=5).pack(
+    expand=True, fill="y", padx=10, pady=10)
 
 
 # buttons
 load = ctk.CTkButton(
     animated_panel,
     text="Load",
-    font=("Arial", 20),
+    font=("Arial", 14),
     corner_radius=5,
-    width=180,
-    height=40,
-    command=lambda: load_data(
-        var_title, var_category, var_developer, var_price, textbox
+    width=130,
+    height=20,
+    command= lambda: load_data(
+        search, var_category, var_developer, var_price
     ),
 ).pack(expand=True, fill="y", pady=10)
 modify = ctk.CTkButton(
     animated_panel,
     text="Modify",
-    font=("Arial", 20),
+    font=("Arial", 14),
     corner_radius=5,
-    width=180,
-    height=40,
+    width=130,
+    height=20,
 ).pack(expand=True, fill="y", pady=10)
 deleted = ctk.CTkButton(
     animated_panel,
     text="Deleted",
-    font=("Arial", 20),
+    font=("Arial", 14),
     corner_radius=5,
-    width=180,
-    height=40,
+    width=130,
+    height=20,
     command=animated_panel.animate,
 ).pack(expand=True, fill="y", pady=10)
 clean = ctk.CTkButton(
     animated_panel,
     text="Clean",
-    font=("Arial", 20),
+    font=("Arial", 14),
     corner_radius=5,
-    width=180,
-    height=40,
+    width=130,
+    height=20,
     command=animated_panel.animate,
 ).pack(expand=True, fill="y", pady=10)
 
@@ -228,19 +212,19 @@ clean = ctk.CTkButton(
 button = ctk.CTkButton(
     window,
     text="button",
-    font=("Arial", 20),
+    font=("Arial", 14),
     corner_radius=5,
-    width=180,
-    height=40,
+    width=100,
+    height=30,
 )
-button.place(relx=0.14, rely=0.03, anchor="center")
+button.place(relx=0.11, rely=0.035, anchor="center")
 
 toogle = ctk.CTkButton(
     window,
     text="toogle",
     font=("Arial", 30),
-    width=210,
-    height=70,
+    width=130,
+    height=50,
     command=animated_panel.animate,
 )
 toogle.place(relx=0.5, rely=0.91, anchor="center")
@@ -250,15 +234,15 @@ theme_color = ctk.CTkButton(
     text=emoji,
     font=emoji_font,
     corner_radius=5,
-    width=40,
-    height=40,
+    width=30,
+    height=30,
     command=lambda: change_color(theme_color),
 )
-theme_color.place(relx=0.90, rely=0.03, anchor="center")
+theme_color.place(relx=0.90, rely=0.035, anchor="center")
 
 # imputs
-search = ctk.CTkEntry(window, textvariable=var_search, width=180, height=40)
-search.place(relx=0.75, rely=0.03, anchor="center")
+search = ctk.CTkEntry(window, placeholder_text="search", width=100, height=30)
+search.place(relx=0.78, rely=0.035, anchor="center")
 
 # style treeview
 style = ttk.Style()
