@@ -1,5 +1,6 @@
+import re
 import customtkinter as ctk
-from tkinter import ttk, StringVar
+from tkinter import ttk, messagebox
 import sqlite3
 
 # import tkinter.font as tkfont
@@ -29,24 +30,181 @@ def create_table():
     connection.commit()
 
 
-def load_data(entry_title, var_category, var_developer, var_price):
-    print(entry_title.get())
-    load = (
-        var_title.get(),
-        var_category.get(),
-        var_developer.get(),
-        var_price.get(),
+def load_data(title, category, developer, price, description, mitreview):
+    re_number = r"^\d+(\.\d{1,2})?$"
+    re_null = r"^(?!\s*$).+"
+    field_empy = False
+
+    data = (
+        title.get(),
+        category.get(),
+        developer.get(),
+        price.get(),
+        description.get("1.0", "end-1c"),
     )
+
+    for element in data:
+        if not re.match(re_null, element):
+            field_empy = True
+            break
+    if field_empy:
+        messagebox.showwarning("Validación", "Tienes campos sin completar")
+
+    elif not re.match(re_number, data[3]):
+        messagebox.showwarning("Validación", "El valor en el imputs 'precio' no es válido")
+
+    else:
+        connection = create_db()
+        cursor = connection.cursor()
+        sql = "INSERT INTO data_game (title, category, developer, price, description) VALUES (?, ?, ?, ?, ?)"
+        cursor.execute(sql, data)
+        connection.commit()
+        update_tree(mitreview)
+        messagebox.showinfo("Aviso", "Juego agregado exitosamente.")
+
+
+def del_item(mitreview):
+    value = mitreview.selection()
+    if value:
+        confirm = messagebox.askyesno(
+            "Confirmación",
+            "¿Estás seguro de que deseas borrar los datos seleccionados?",
+        )
+        if confirm:
+            for element in value:
+                item = mitreview.item(element)
+                my_id = item["text"]
+
+                connection = create_db()
+                cursor = connection.cursor()
+                data = (my_id,)
+                sql = "DELETE FROM data_game WHERE id = ?"
+                cursor.execute(sql, data)
+                connection.commit()
+                mitreview.delete(element)
+        messagebox.showinfo("Aviso", "datos borrados exitosamente")
+
+
+def modify_item(title, category, developer, price, description, mitreview):
+    value = mitreview.selection()
+    if value:
+        re_number = r"^\d+(\.\d{1,2})?$"
+        re_null = r"^(?!\s*$).+"
+        field_empy = False
+
+        re_data = (
+            title.get(),
+            category.get(),
+            developer.get(),
+            price.get(),
+            description.get("1.0", "end-1c"),
+        )
+
+        for element in re_data:
+            if not re.match(re_null, element):
+                field_empy = True
+                break
+        if field_empy:
+            messagebox.showwarning("Validación", "Tienes campos sin completar")
+
+        elif not re.match(re_number, re_data[3]):
+            messagebox.showwarning("Validación", "El valor en el imputs 'precio' no es válido")
+
+        else:
+            confirm = messagebox.askyesno(
+                "Confirmación",
+                "¿Estás seguro de que deseas modificar los datos seleccionados?",
+            )
+            if confirm:
+                item = mitreview.item(value)
+                my_id = item['text']
+
+                data = (title.get(),
+                        category.get(),
+                        developer.get(),
+                        price.get(),
+                        description.get("1.0", "end-1c"),
+                        my_id,
+                        )
+
+                connection = create_db()
+                cursor = connection.cursor()
+                sql = "UPDATE data_game SET title=?, category=?, developer=?, price=?, description=? WHERE id=?"
+                cursor.execute(sql, data)
+                connection.commit()
+                update_tree(mitreview)
+                messagebox.showinfo("Aviso", "datos modificados exitosamente")
+
+
+def clean_fields(title, category, developer, price, description, search, mitreview):
+    title.delete(0, "end")
+    category.delete(0, "end")
+    developer.delete(0, "end")
+    price.delete(0, "end")
+    description.delete("1.0", "end")
+    search.delete(0, "end")
+    update_tree(mitreview)
+
+
+def fun_search(search, mitreview):
+    imput_search = search.get()
     connection = create_db()
     cursor = connection.cursor()
-    sql = "INSERT INTO data_game (title, category, developer, price) VALUES (?, ?, ?, ?)"
-    cursor.execute(sql, load)
-    connection.commit()
+    sql = "SELECT title, category, developer, price, description FROM data_game WHERE title=?OR category=? OR developer=?"
+    data = cursor.execute(sql, (imput_search, imput_search, imput_search))
+
+    records = mitreview.get_children()
+    for element in records:
+        mitreview.delete(element)
+
+    result = data.fetchall()
+    for file in result:
+        mitreview.insert("", "end", values=(file[0], file[1], file[2], file[3], file[4]))
 
 
-def connect():
+def tree_selected(event):
+    value = tree.selection()
+    if value:
+        for element in value:
+            item = tree.item(element)
+            value = item['values']
+
+            entry_title.delete(0, "end")
+            entry_title.insert(0, value[0])
+
+            entry_category.delete(0, "end")
+            entry_category.insert(0, value[1])
+
+            entry_developer.delete(0, "end")
+            entry_developer.insert(0, value[2])
+
+            entry_price.delete(0, "end")
+            entry_price.insert(0, value[3])
+
+            textbox.delete("1.0", "end")
+            textbox.insert("1.0", value[4])
+
+
+def update_tree(mitreview):
+    record = mitreview.get_children()
+    for element in record:
+        mitreview.delete(element)
+
+    connection = create_db()
+    cursor = connection.cursor()
+    sql = "SELECT * FROM data_game ORDER BY id ASC"
+    data = cursor.execute(sql)
+
+    result = data.fetchall()
+
+    for fila in result:
+        mitreview.insert("", "end", text=fila[0], values=(fila[1], fila[2], fila[3], fila[4], fila[5]))
+
+
+def connect(mitreview):
     create_db()
     create_table()
+    update_tree(mitreview)
 
 
 def change_color(theme_color):
@@ -124,14 +282,6 @@ window.title("Animated Widgets")
 window.geometry("600x600")
 ctk.set_appearance_mode(appearance_mode)
 
-# variables
-var_title = StringVar()
-var_category = StringVar()
-var_developer = StringVar()
-var_price = StringVar()
-var_description = StringVar()
-var_search = StringVar()
-
 # animated widget
 animated_panel = SlidePanel(window, 0.96, 0.65)
 
@@ -148,23 +298,23 @@ toogle_sidebar = ctk.CTkButton(
 
 # label and imputs
 
-entry_title = ctk.CTkEntry(animated_panel, placeholder_text="Title", width=130, height=5).pack(
-    expand=True, fill="y", padx=10, pady=10)
+entry_title = ctk.CTkEntry(animated_panel, placeholder_text="Title", width=130, height=5)
+entry_title.pack(expand=True, fill="y", padx=10, pady=10)
 
-entry_category = ctk.CTkEntry(animated_panel, placeholder_text="Category", width=130, height=5).pack(
-    expand=True, fill="y", padx=10, pady=10)
+entry_category = ctk.CTkEntry(animated_panel, placeholder_text="Category", width=130, height=5)
+entry_category.pack(expand=True, fill="y", padx=10, pady=10)
 
-entry_developer = ctk.CTkEntry(animated_panel, placeholder_text="Developer", width=130, height=5).pack(
-    expand=True, fill="y", padx=10, pady=10)
+entry_developer = ctk.CTkEntry(animated_panel, placeholder_text="Developer", width=130, height=5)
+entry_developer.pack(expand=True, fill="y", padx=10, pady=10)
 
-entry_price = ctk.CTkEntry(animated_panel, placeholder_text="Price", width=130, height=5).pack(
-    expand=True, fill="y", padx=10, pady=10)
+entry_price = ctk.CTkEntry(animated_panel, placeholder_text="Price", width=130, height=5)
+entry_price.pack(expand=True, fill="y", padx=10, pady=10)
 
 # textbox
 label_description = ctk.CTkLabel(animated_panel, text="Description", width=130, height=3).pack(
     padx=1, pady=1)
-textbox = ctk.CTkTextbox(animated_panel, width=130, height=5).pack(
-    expand=True, fill="y", padx=10, pady=10)
+textbox = ctk.CTkTextbox(animated_panel, width=130, height=5)
+textbox.pack(expand=True, fill="y", padx=10, pady=10)
 
 
 # buttons
@@ -176,7 +326,7 @@ load = ctk.CTkButton(
     width=130,
     height=20,
     command= lambda: load_data(
-        search, var_category, var_developer, var_price
+        entry_title, entry_category, entry_developer, entry_price, textbox, tree
     ),
 ).pack(expand=True, fill="y", pady=10)
 modify = ctk.CTkButton(
@@ -186,6 +336,8 @@ modify = ctk.CTkButton(
     corner_radius=5,
     width=130,
     height=20,
+    command= lambda: modify_item(entry_title, entry_category, entry_developer, entry_price, textbox, tree
+    ),
 ).pack(expand=True, fill="y", pady=10)
 deleted = ctk.CTkButton(
     animated_panel,
@@ -194,7 +346,7 @@ deleted = ctk.CTkButton(
     corner_radius=5,
     width=130,
     height=20,
-    command=animated_panel.animate,
+    command= lambda: del_item(tree),
 ).pack(expand=True, fill="y", pady=10)
 clean = ctk.CTkButton(
     animated_panel,
@@ -203,7 +355,8 @@ clean = ctk.CTkButton(
     corner_radius=5,
     width=130,
     height=20,
-    command=animated_panel.animate,
+    command= lambda: clean_fields(entry_title, entry_category, entry_developer, entry_price, textbox, entry_search, tree
+    ),
 ).pack(expand=True, fill="y", pady=10)
 
 # window elements
@@ -216,6 +369,7 @@ button = ctk.CTkButton(
     corner_radius=5,
     width=100,
     height=30,
+    command= lambda: fun_search(entry_search, tree)
 )
 button.place(relx=0.11, rely=0.035, anchor="center")
 
@@ -241,8 +395,8 @@ theme_color = ctk.CTkButton(
 theme_color.place(relx=0.90, rely=0.035, anchor="center")
 
 # imputs
-search = ctk.CTkEntry(window, placeholder_text="search", width=100, height=30)
-search.place(relx=0.78, rely=0.035, anchor="center")
+entry_search = ctk.CTkEntry(window, placeholder_text="search", width=100, height=30)
+entry_search.place(relx=0.78, rely=0.035, anchor="center")
 
 # style treeview
 style = ttk.Style()
@@ -278,9 +432,10 @@ tree.heading("developer", text="Developer")
 tree.heading("price", text="Price")
 tree.heading("description", text="Description")
 tree.place(relx=0.027, rely=0.08, relwidth=0.9, relheight=0.75)
+tree.bind("<<TreeviewSelect>>", tree_selected)
 
 animated_panel.lift()
 
-connect()
+connect(tree)
 
 window.mainloop()
